@@ -1,0 +1,56 @@
+name: "Test scripts"
+
+description: "Make tests on target repository"
+
+inputs:
+  bootstrap_cmd:
+    description: "Command for bootstrap or prepare"
+    required: false
+    default: npx cas packages bootstrap
+  test_cmd:
+    description: "Command for run testing"
+    required: false
+    default: npm run test
+
+  node_version:
+    description: 'The Nodejs Version for installation and release'
+    required: false
+    default: '16.16.0'
+  npm_registry:
+    description: "The registry to make release to"
+    required: false
+    default: npm-registry.deip.world
+
+  npm_token:
+    description: 'Required variable for release creation'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Change Node.js version
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ inputs.node_version }}
+
+    - name: Checkout source code
+      uses: actions/checkout@v2
+
+    - name: NPM Authorization for Private Registry
+      shell: bash
+      run: |
+        npm config set //${{ inputs.npm_registry }}/:_authToken $NPM_TOKEN
+      env:
+        NPM_TOKEN: ${{ inputs.npm_token }}
+
+    - name: Install
+      shell: bash
+      run: npm install
+
+    - name: Bootstrap
+      shell: bash
+      run: ${{ inputs.bootstrap_cmd }}
+
+    - name: Testing
+      shell: bash
+      run: ${{ inputs.test_cmd }}

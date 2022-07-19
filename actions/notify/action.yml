@@ -1,0 +1,41 @@
+name: 'Back merge'
+
+description: 'Merge specified branch to target'
+
+inputs:
+  title:
+    description: 'Title'
+    required: false
+
+  channel:
+    description: 'Slack channel'
+    required: false
+    default: casimir-dev-notifications
+  message:
+    description: 'Message'
+    required: false
+    default: ${{ github.event.pull_request.html_url || github.event.head_commit.url || 'We make some magic :)' }}
+  color:
+    description: 'Message color'
+    required: false
+    default: '#13EAF9'
+
+  SLACK_WEBHOOK_URL:
+    description: Action secrets
+    required: true
+
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Slack notification
+      uses: rtCamp/action-slack-notify@master
+      env:
+        SLACK_CHANNEL: ${{ inputs.channel }}
+        SLACK_TITLE: ${{ inputs.title }}
+        SLACK_MESSAGE: ${{ inputs.message }}
+        SLACK_COLOR: ${{ inputs.color }}
+        SLACK_USERNAME: 'Github Actions'
+        MSG_MINIMAL: true
+        SLACK_WEBHOOK: ${{ inputs.SLACK_WEBHOOK_URL }}
+        SLACK_ICON: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png

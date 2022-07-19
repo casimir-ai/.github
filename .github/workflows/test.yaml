@@ -1,0 +1,55 @@
+on:
+  workflow_call:
+    inputs:
+      action_title:
+        type: string
+        required: true
+
+      node_version:
+        type: string
+        required: false
+        default: '16.16.0'
+      npm_registry:
+        type: string
+        required: false
+        default: npm-registry.deip.world
+
+      bootstrap_cmd:
+        type: string
+        required: false
+        default: npx cas packages bootstrap
+      test_cmd:
+        type: string
+        required: false
+        default: npm run test
+
+    secrets:
+      NPM_TOKEN:
+        description: 'Required variable for release creation'
+        required: true
+      SLACK_WEBHOOK_URL:
+        description: 'Required variable for release creation'
+        required: true
+
+jobs:
+  test:
+    name: Test on node ${{ inputs.node_version }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Make Tests
+        uses: casimir-ai/.github/actions/make-test@master
+        with:
+          npm_token: ${{ secrets.NPM_TOKEN }}
+
+  run-if-test-failed:
+    runs-on: ubuntu-latest
+    needs: [ test ]
+    if: always() && (needs.test.result == 'failure')
+    steps:
+      - name: Failure Slack notification
+        uses: casimir-ai/.github/actions/notify@master
+        with:
+          title: "${{ github.ref }}: ${{ inputs.action_title }} Failed!"
+          message: "${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+          color: '#FF5132'
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
